@@ -61,11 +61,17 @@ project/
 └── eslint.config.ts                  compiler rules + import boundaries
 
 
-
-
-
 Adding your next feature in 4 steps
 1. mkdir src/features/analytics/{components,hooks,api,store}
 2. write src/features/analytics/module.ts
 3. write src/pages/AnalyticsPage.tsx
 4. add analyticsModule to MODULES[] in src/lib/moduleRegistry.ts
+
+
+Querying/API handling rules
+"Am I reading data to display in the UI?"
+  → Yes → useQuery / useSuspenseQuery
+"Am I changing something on the server that affects cached data?"
+  → Yes → useMutation (+ invalidateQueries after)
+"Am I performing an action that has no cache relationship?"
+  → Yes → useActionState (React 19) or plain async function
