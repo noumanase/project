@@ -1,0 +1,42 @@
+/* src/index.css */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Design tokens — define your brand colours here as CSS variables.
+   Tailwind reads these via the config so you get full utility class support.
+   Swap these out for your brand palette without touching any component code.
+───────────────────────────────────────────────────────────────────────────── */
+:root {
+  --brand-50:  #eff6ff;
+  --brand-100: #dbeafe;
+  --brand-500: #3b82f6;
+  --brand-600: #2563eb;
+  --brand-900: #1e3a8a;
+
+  --color-bg:      #f9fafb;
+  --color-surface: #ffffff;
+  --color-border:  #e5e7eb;
+}
+
+/* Dark mode tokens — swap automatically when system prefers dark */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-bg:      #0f172a;
+    --color-surface: #1e293b;
+    --color-border:  #334155;
+  }
+}
+
+/* Base reset */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}

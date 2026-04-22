@@ -1,0 +1,40 @@
+{
+  "compilerOptions": {
+    // ── Target ───────────────────────────────────────────────────────────────
+    "target": "ES2022",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "jsx": "react-jsx",
+
+    // ── Strictness (never turn these off — catch bugs at compile time) ────────
+    "strict": true,
+    "noUncheckedIndexedAccess": true,   // arr[0] is T | undefined, not T
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "exactOptionalPropertyTypes": true,
+
+    // ── Module interop ───────────────────────────────────────────────────────
+    "esModuleInterop": true,
+    "isolatedModules": true,
+    "allowImportingTsExtensions": true,
+    "resolveJsonModule": true,
+
+    // ── Output ───────────────────────────────────────────────────────────────
+    "noEmit": true,  // Vite handles emit, TS just type-checks
+
+    // ── Path aliases (must mirror vite.config.ts aliases exactly) ────────────
+    "paths": {
+      "@features/*": ["./src/features/*"],
+      "@shared/*":   ["./src/shared/*"],
+      "@pages/*":    ["./src/pages/*"],
+      "@router/*":   ["./src/router/*"],
+      "@lib/*":      ["./src/lib/*"],
+    },
+
+    // ── Skip lib checks (speeds up type-checking significantly) ──────────────
+    "skipLibCheck": true
+  },
+  "include": ["src", "vite.config.ts"],
+  "exclude": ["node_modules", "dist"]
+}
