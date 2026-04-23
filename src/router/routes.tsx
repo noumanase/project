@@ -36,6 +36,7 @@ const hasRestrictedRoles = (
 ): route is (typeof allRoutes)[number] & { roles: Role[] } =>
   Array.isArray(route.roles) && route.roles.length > 0;
 
+// Public routes - anyone can access (including non-logged-in users)
 const publicRoutes = allRoutes
   .filter((r) => r.roles === null)
   .map((r) => ({
@@ -43,13 +44,15 @@ const publicRoutes = allRoutes
     element: withSuspense(lazy(r.lazy)),
   }));
 
-const openAuthRoutes = allRoutes
+// Private routes - any authenticated user can access (no role restrictions)
+const privateRoutes = allRoutes
   .filter((r) => r.roles === undefined)
   .map((r) => ({
     path: r.path,
     element: withSuspense(lazy(r.lazy)),
   }));
 
+// Role-based routes - only specific roles can access
 const restrictedRoutes = allRoutes.filter(hasRestrictedRoles);
 
 const roleGroupMap = new Map<
@@ -77,7 +80,7 @@ const roleGroupRoutes = [...roleGroupMap.values()].map(({ roles, paths }) => ({
 
 export const appRoutes = [
   {
-    errorElement: <RouteErrorBoundary />,
+    errorElement: <RouteErrorBoundary />, // Catches errors in any child route and displays a fallback UI
     children: [
       { path: "/", element: <Navigate to="/dashboard" replace /> },
       ...publicRoutes,
@@ -86,7 +89,7 @@ export const appRoutes = [
         children: [
           {
             element: <AppLayout />,
-            children: [...openAuthRoutes, ...roleGroupRoutes],
+            children: [...privateRoutes, ...roleGroupRoutes],
           },
         ],
       },
