@@ -5,11 +5,11 @@
 //   - Native <form action={...}> — React 19 supports async functions as actions
 //   - useFormStatus-style isPending from useActionState (no need for useFormStatus here)
 
-import { useLogin } from '../hooks/useLogin'
-import { cn } from '@shared/lib'
+import { cn } from "@shared/lib";
+import { useLogin } from "../hooks/useLogin";
 
 export const LoginForm = () => {
-  const { state, action, isPending } = useLogin()
+  const { state, action, isPending } = useLogin();
 
   return (
     <form action={action} className="flex flex-col w-full max-w-sm gap-4">
@@ -25,9 +25,9 @@ export const LoginForm = () => {
           autoComplete="email"
           disabled={isPending}
           className={cn(
-            'rounded-md border px-3 py-2 text-sm outline-none',
-            'focus:ring-2 focus:ring-brand-500',
-            'disabled:opacity-50',
+            "rounded-md border px-3 py-2 text-sm outline-none",
+            "focus:ring-2 focus:ring-brand-500",
+            "disabled:opacity-50",
           )}
         />
       </div>
@@ -44,9 +44,9 @@ export const LoginForm = () => {
           autoComplete="current-password"
           disabled={isPending}
           className={cn(
-            'rounded-md border px-3 py-2 text-sm outline-none',
-            'focus:ring-2 focus:ring-brand-500',
-            'disabled:opacity-50',
+            "rounded-md border px-3 py-2 text-sm outline-none",
+            "focus:ring-2 focus:ring-brand-500",
+            "disabled:opacity-50",
           )}
         />
       </div>
@@ -62,14 +62,14 @@ export const LoginForm = () => {
         type="submit"
         disabled={isPending}
         className={cn(
-          'rounded-md bg-brand-500 px-4 py-2 text-sm font-semibold text-white',
-          'hover:bg-brand-600 focus:ring-2 focus:ring-brand-500 focus:ring-offset-2',
-          'disabled:opacity-60 disabled:cursor-not-allowed',
-          'transition-colors',
+          "rounded-md bg-brand-500 px-4 py-2 text-sm font-semibold text-white",
+          "hover:bg-brand-600 focus:ring-2 focus:ring-brand-500 focus:ring-offset-2",
+          "disabled:opacity-60 disabled:cursor-not-allowed",
+          "transition-colors",
         )}
       >
-        {isPending ? 'Signing in…' : 'Sign in'}
+        {isPending ? "Signing in…" : "Sign in"}
       </button>
     </form>
-  )
-}
+  );
+};
