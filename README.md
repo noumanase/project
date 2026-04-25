@@ -1,4 +1,283 @@
-# Complete Routing Guide - Your Codebase
+## Developer Guide to the Project
+How to Add Modules, Register Routes, Enforce Roles, Handle Data Fetching, and Navigate the Codebase.
+
+### Tech Stack
+- Frontend Framework: React 19 + React DOM
+- Language: TypeScript
+- Build Tool: Vite 8
+- Routing: React Router v7
+- Data Fetching & Caching: TanStack Query v5
+- HTTP Client: Axios
+- State Management: Zustand
+- Forms & Validation: React Hook Form + Zod
+- Styling: Tailwind CSS + PostCSS + Autoprefixer
+- Utility Libraries: clsx + tailwind-merge
+- Code Quality: ESLint + TypeScript ESLint
+
+#
+
+<details>
+<summary><strong>How to Add a New Module</strong></summary>
+
+
+This project uses a plug-and-play module system. Adding a new feature involves
+**one structural step** and a few files. Nothing in the core shell (router,
+sidebar, layout) ever needs to change.
+
+---
+### TLDR
+Adding your next feature in 4 steps
+1. mkdir src/features/analytics/{components,hooks,api,store}
+2. write src/features/analytics/module.ts
+3. write src/pages/AnalyticsPage.tsx
+4. add analyticsModule to MODULES[] in src/lib/moduleRegistry.ts
+
+---
+
+## The 5-step checklist (detailed)
+
+### 1. Create the feature folder
+
+```
+src/features/my-feature/
+  components/    ← UI only, no business logic
+  hooks/         ← logic only, no JSX
+  api/           ← TanStack Query queryOptions + raw fetch functions
+  store/         ← Zustand slice (only if this feature has local client state)
+  types.ts       ← types scoped to this feature
+  module.ts      ← plug-and-play descriptor (routes, nav, init)
+  index.ts       ← public barrel — only export what pages/other modules need
+```
+
+### 2. Write `module.ts`
+
+This is the only file the core system reads. It declares everything the shell
+needs to know about your feature.
+
+```ts
+// src/features/my-feature/module.ts
+import type { ModuleConfig } from '@lib/moduleRegistry'
+
+export const myFeatureModule: ModuleConfig = {
+  id: 'my-feature',
+
+  // Optional — omit if this feature has no sidebar link
+  navItem: {
+    label: 'My Feature',
+    path: '/my-feature',
+    icon: '★',
+    order: 5,           // controls sidebar position
+  },
+
+  routes: [
+    {
+      path: '/my-feature',
+      lazy: () => import('@pages/MyFeaturePage'),
+      // roles convention:
+      //   null      → public (no login required)
+      //   undefined → any authenticated user
+      //   ['admin'] → restricted to listed roles
+      roles: ['admin', 'manager'],
+    },
+    // Multiple routes are fine — settings module does this
+    {
+      path: '/my-feature/:id',
+      lazy: () => import('@pages/MyFeatureDetailPage'),
+      roles: ['admin', 'manager'],
+    },
+  ],
+
+  // Optional — runs once on app boot after auth hydrates.
+  // Good for: prefetching data, connecting sockets, loading feature flags.
+  initialize: async ({ userRole }) => {
+    if (userRole === 'admin') {
+      // e.g. await queryClient.prefetchQuery(myFeatureQueryOptions())
+    }
+  },
+}
+```
+
+### 3. Create the page component(s)
+
+```tsx
+// src/pages/MyFeaturePage.tsx
+// Keep pages thin — they just compose feature components.
+import { Suspense } from 'react'
+import { MyFeatureTable } from '@features/my-feature'
+
+const MyFeaturePage = () => (
+  <div>
+    <h1 className="text-2xl font-bold text-gray-900">My Feature</h1>
+    <Suspense fallback={<div>Loading...</div>}>
+      <MyFeatureTable />
+    </Suspense>
+  </div>
+)
+
+export default MyFeaturePage
+```
+
+### 4. Register in the module registry
+
+Open **`src/lib/moduleRegistry.ts`** and add two lines:
+
+```ts
+// Add the import at the top
+import { myFeatureModule } from '@features/my-feature/module'
+
+// Add to the MODULES array
+export const MODULES: ModuleConfig[] = [
+  authModule,
+  dashboardModule,
+  dataTableModule,
+  settingsModule,
+  myFeatureModule,   // ← add here
+]
+```
+
+That's it. **The router and sidebar update automatically.**
+
+### 5. Export from the feature index
+
+```ts
+// src/features/my-feature/index.ts
+// Only export what pages and other consumers need.
+// Internal helpers stay private.
+export { MyFeatureTable } from './components/MyFeatureTable'
+export { useMyFeatureData } from './hooks/useMyFeatureData'
+```
+
+---
+
+## What you never need to change when adding a module
+
+| File | Why it never changes |
+|---|---|
+| `src/router/index.tsx` | Reads routes from registry automatically |
+| `src/shared/components/Sidebar.tsx` | Reads navItems from registry automatically |
+| `src/App.tsx` | Runs `initializeModules()` which picks up new init hooks |
+| Any existing feature | Modules are isolated — they can't import each other |
+
+---
+
+## Internal structure conventions for a new feature
+
+### API file pattern
+
+```ts
+// features/my-feature/api/myFeatureApi.ts
+import { queryOptions } from '@tanstack/react-query'
+import { apiClient } from '@shared/api'
+import type { MyItem } from '../types'
+
+// 1. Raw fetch function
+const fetchMyItems = async (filters: MyFilters) => {
+  const { data } = await apiClient.get<PaginatedResponse<MyItem>>('/my-items', {
+    params: filters,
+  })
+  return data
+}
+
+// 2. queryOptions — reusable, type-safe query definition
+export const myItemsQueryOptions = (filters: MyFilters) =>
+  queryOptions({
+    queryKey: ['my-items', filters] as const,
+    queryFn: () => fetchMyItems(filters),
+    staleTime: 60_000,
+  })
+```
+
+### Hook pattern
+
+```ts
+// features/my-feature/hooks/useMyFeatureData.ts
+// Logic lives here, not in components.
+import { useSuspenseQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { myItemsQueryOptions } from '../api/myFeatureApi'
+
+export function useMyFeatureData(filters: MyFilters) {
+  const queryClient = useQueryClient()
+  const { data, isFetching } = useSuspenseQuery(myItemsQueryOptions(filters))
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => apiClient.delete(`/my-items/${id}`),
+    onSuccess: () => {
+      // Invalidate = TanStack Query refetches automatically
+      void queryClient.invalidateQueries({ queryKey: ['my-items'] })
+    },
+  })
+
+  return { items: data.data, meta: data.meta, isFetching, deleteMutation }
+}
+```
+
+### Store pattern (only if needed)
+
+```ts
+// features/my-feature/store/useMyFeatureStore.ts
+// Only create a store if this feature has CLIENT state (filters, selections, etc.)
+// If all state is server data, skip this file — TanStack Query is enough.
+import { create } from 'zustand'
+import { devtools } from 'zustand/middleware'
+
+interface MyFeatureState {
+  selectedIds: string[]
+  toggleSelect: (id: string) => void
+  clearSelection: () => void
+}
+
+export const useMyFeatureStore = create<MyFeatureState>()(
+  devtools(
+    (set) => ({
+      selectedIds: [],
+      toggleSelect: (id) =>
+        set((s) => ({
+          selectedIds: s.selectedIds.includes(id)
+            ? s.selectedIds.filter((x) => x !== id)
+            : [...s.selectedIds, id],
+        }), false, 'myFeature/toggleSelect'),
+      clearSelection: () =>
+        set({ selectedIds: [] }, false, 'myFeature/clearSelection'),
+    }),
+    { name: 'MyFeatureStore' },
+  ),
+)
+```
+
+---
+
+## The golden import rule (enforced by ESLint)
+
+```
+features/my-feature  →  can import from  shared/
+features/my-feature  →  CANNOT import from  features/anything-else
+shared/              →  CANNOT import from  features/
+pages/               →  can import from  features/ and shared/
+```
+
+If you find yourself wanting to import from another feature, the code belongs
+in `shared/` instead. ESLint will catch violations before they reach CI.
+
+---
+
+## Checklist for code review
+
+When reviewing a new module PR, verify:
+
+- [ ] `module.ts` exists and is registered in `moduleRegistry.ts`
+- [ ] `index.ts` barrel exists and only exports what's needed
+- [ ] No cross-feature imports (ESLint enforces this, but double-check)
+- [ ] Server data is in TanStack Query, not Zustand
+- [ ] No `useMemo` / `useCallback` / `React.memo` (compiler handles it)
+- [ ] Page component uses `<Suspense>` around any `useSuspenseQuery` component
+- [ ] New `VITE_*` env vars are documented in `.env.example`
+
+---
+
+</details>
+
+<details>
+<summary><strong>Complete Routing Guide</strong></summary>
 
 ## Table of Contents
 
@@ -536,3 +815,171 @@ User navigates to /settings/users
 | `src/shared/hooks/usePermission.ts` | Permission checking hook          |
 | `src/shared/types/auth.ts`          | Type definitions for auth         |
 | `src/features/*/module.ts`          | Each feature's route config       |
+
+---
+
+</details>
+
+<details>
+<summary><strong>Querying/API handling rules</strong></summary>
+
+- **Am I reading data to display in the UI?**  
+  → Yes: `useQuery` / `useSuspenseQuery`
+
+- **Am I changing something on the server that affects cached data?**  
+  → Yes: `useMutation` + `invalidateQueries` after
+
+- **Am I performing an action that has no cache relationship?**  
+  → Yes: `useActionState` (React 19) or a plain async function
+
+
+
+---
+
+</details>
+
+<details>
+<summary><strong>Project Folder Structure</strong></summary>
+
+## Overview
+
+This project uses a **modular, plug-and-play architecture**.
+
+- Core integration point: `src/lib/moduleRegistry.ts`
+- Features are grouped by domain in `src/features/*`
+- Shared cross-cutting utilities live in `src/shared/*`
+
+---
+
+## Directory Tree
+
+```text
+project/
+├── src/
+│   ├── lib/
+│   │   └── moduleRegistry.ts
+│   │
+│   ├── features/
+│   │   ├── auth/
+│   │   │   ├── api/authApi.ts
+│   │   │   ├── components/LoginForm
+│   │   │   ├── hooks/useLogin.ts
+│   │   │   ├── module.ts
+│   │   │   └── index.ts
+│   │   ├── dashboard/
+│   │   │   └── module.ts
+│   │   ├── data-table/
+│   │   │   ├── api/tableApi.ts
+│   │   │   ├── components/DataTable
+│   │   │   ├── components/FilterBar
+│   │   │   ├── hooks/useTableData
+│   │   │   ├── store/useTableStore
+│   │   │   ├── types.ts
+│   │   │   ├── module.ts
+│   │   │   └── index.ts
+│   │   └── settings/
+│   │       └── module.ts
+│   │
+│   ├── shared/
+│   │   ├── api/client.ts
+│   │   ├── components/
+│   │   │   ├── Sidebar.tsx
+│   │   │   └── AppLayout.tsx
+│   │   ├── hooks/
+│   │   │   ├── usePermission.ts
+│   │   │   └── useDebounce.ts
+│   │   ├── lib/
+│   │   │   ├── cn.ts
+│   │   │   └── queryClient.ts
+│   │   ├── stores/
+│   │   │   ├── useAuthStore.ts
+│   │   │   ├── useUIStore.ts
+│   │   │   └── useRealtimeStore.ts
+│   │   └── types/
+│   │
+│   ├── router/
+│   │   ├── guards/RequireAuth.tsx
+│   │   ├── guards/RequireRole.tsx
+│   │   └── index.tsx
+│   │
+│   ├── pages/
+│   │   ├── LoginPage, DashboardPage, DataTablePage
+│   │   ├── SettingsPage, UserManagementPage, ProfilePage
+│   │   └── ForbiddenPage, NotFoundPage
+│   │
+│   ├── App.tsx
+│   └── main.tsx
+│
+├── ADDING_A_MODULE.md
+├── .env.example
+├── vite.config.ts
+├── tsconfig.json
+└── eslint.config.ts
+```
+
+---
+
+## File/Folder Notes
+
+### `src/lib`
+- `moduleRegistry.ts`: **the plug-and-play hub**.
+
+### `src/features/auth`
+- `api/authApi.ts`: login, logout, getMe.
+- `components/LoginForm`: React 19 `useActionState`.
+- `hooks/useLogin.ts`: action + pending + error state.
+- `module.ts`: declares `/login` as a public route.
+- `index.ts`: public barrel export.
+
+### `src/features/dashboard`
+- `module.ts`: declares `/dashboard` route.
+
+### `src/features/data-table`
+- `api/tableApi.ts`: queryOptions (TanStack Query v5 pattern).
+- `components/DataTable`: RBAC-aware actions, sort, pagination.
+- `components/FilterBar`: writes to store only.
+- `hooks/useTableData`: debounced filters + `useSuspenseQuery`.
+- `store/useTableStore`: Zustand filter/sort/page state.
+- `types.ts`: data-table types.
+- `module.ts`: declares `/data-table` (admin + manager).
+- `index.ts`: feature barrel export.
+
+### `src/features/settings`
+- `module.ts`: `/settings`, `/settings/users`, `/profile` routes.
+
+### `src/shared`
+- `api/client.ts`: axios + token injection + 401 handler.
+- `components/Sidebar.tsx`: dynamic nav from registry.
+- `components/AppLayout.tsx`: shell (sidebar + header + `<Outlet>`).
+- `hooks/usePermission.ts`: RBAC hook used across app.
+- `hooks/useDebounce.ts`: generic debounce hook.
+- `lib/cn.ts`: `clsx` + `tailwind-merge` helper.
+- `lib/queryClient.ts`: TanStack Query config.
+- `stores/useAuthStore.ts`: persisted user + token.
+- `stores/useUIStore.ts`: sidebar, modals, theme state.
+- `stores/useRealtimeStore.ts`: single WebSocket connection.
+- `types/`: Role, User, ApiResponse, etc.
+
+### `src/router`
+- `guards/RequireAuth.tsx`: redirects to `/login`, preserves destination.
+- `guards/RequireRole.tsx`: redirects to `/403`.
+- `index.tsx`: dynamic router from module registry.
+
+### `src/pages`
+- Thin route-level components:
+	- LoginPage, DashboardPage, DataTablePage
+	- SettingsPage, UserManagementPage, ProfilePage
+	- ForbiddenPage, NotFoundPage
+
+### Root files
+- `ADDING_A_MODULE.md`: team playbook (read first).
+- `.env.example`: environment template.
+- `vite.config.ts`: React Compiler via rolldown.
+- `tsconfig.json`: strict mode + path aliases.
+- `eslint.config.ts`: compiler rules + import boundaries.
+
+
+
+---
+
+</details>
