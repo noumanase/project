@@ -12,7 +12,7 @@ import { getAllModuleRoutes } from "@lib/moduleRegistry";
 import { AppLayout } from "@shared/components/AppLayout";
 import type { Role } from "@shared/types";
 import { lazy, Suspense } from "react";
-import { RouteErrorBoundary } from "@shared/components/ui/RouteErrorBoundary";
+import { RouteErrorBoundary } from "@shared/components";
 
 const ForbiddenPage = lazy(() => import("@pages/ForbiddenPage"));
 const NotFoundPage = lazy(() => import("@pages/NotFoundPage"));
