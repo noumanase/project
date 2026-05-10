@@ -7,6 +7,7 @@
 
 import { cn } from "@shared/lib";
 import { useLogin } from "../hooks/useLogin";
+import { Button } from "@shared/components/ui/button";
 
 export const LoginForm = () => {
   const { state, action, isPending } = useLogin();
@@ -25,7 +26,7 @@ export const LoginForm = () => {
           autoComplete="email"
           disabled={isPending}
           className={cn(
-            "rounded-md border px-3 py-2 text-sm outline-none",
+            "rounded-md border px-3 py-2 text-sm outline-hidden",
             "focus:ring-2 focus:ring-brand-500",
             "disabled:opacity-50",
           )}
@@ -44,7 +45,7 @@ export const LoginForm = () => {
           autoComplete="current-password"
           disabled={isPending}
           className={cn(
-            "rounded-md border px-3 py-2 text-sm outline-none",
+            "rounded-md border px-3 py-2 text-sm outline-hidden",
             "focus:ring-2 focus:ring-brand-500",
             "disabled:opacity-50",
           )}
@@ -70,6 +71,9 @@ export const LoginForm = () => {
       >
         {isPending ? "Signing in…" : "Sign in"}
       </button>
+      <Button variant={"default"} type="submit" disabled={isPending}>
+        {isPending ? "Signing in…" : "Sign in"}
+      </Button>
     </form>
   );
 };

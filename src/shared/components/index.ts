@@ -1,3 +1,4 @@
 // shared/components/index.ts
-export { Sidebar } from './Sidebar'
-export { AppLayout } from './AppLayout'
+export { Sidebar } from "./Sidebar";
+export { AppLayout } from "./AppLayout";
+export { RouteErrorBoundary } from "./RouteErrorBoundary";

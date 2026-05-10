@@ -25,7 +25,7 @@ export const FilterBar = () => {
         placeholder="Search…"
         className={cn(
           'w-64 rounded-md border px-3 py-1.5 text-sm',
-          'focus:outline-none focus:ring-2 focus:ring-brand-500',
+          'focus:outline-hidden focus:ring-2 focus:ring-brand-500',
         )}
       />
 
@@ -35,7 +35,7 @@ export const FilterBar = () => {
         onChange={(e) => { setRole(e.target.value); }}
         className={cn(
           'rounded-md border px-3 py-1.5 text-sm',
-          'focus:outline-none focus:ring-2 focus:ring-brand-500',
+          'focus:outline-hidden focus:ring-2 focus:ring-brand-500',
         )}
       >
         <option value="">All roles</option>

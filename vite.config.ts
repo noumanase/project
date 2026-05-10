@@ -1,6 +1,7 @@
 import { defineConfig } from "vite";
 import react, { reactCompilerPreset } from "@vitejs/plugin-react";
 import babel from "@rolldown/plugin-babel";
+import tailwindcss from "@tailwindcss/vite";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Vite Config
@@ -15,6 +16,7 @@ import babel from "@rolldown/plugin-babel";
 
 export default defineConfig({
   plugins: [
+    tailwindcss(),
     react(),
     // React Compiler 1.0 (GA Oct 2025) — handles all memoization automatically.
     // Do NOT manually write useMemo / useCallback / React.memo.

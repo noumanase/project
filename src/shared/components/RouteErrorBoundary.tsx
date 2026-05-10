@@ -25,13 +25,13 @@ export function RouteErrorBoundary() {
         <p className="text-sm text-gray-600">{message}</p>
         <div className="flex gap-2">
           <button
-            className="px-4 py-2 text-white rounded bg-brand-600"
+            className="px-4 py-2 text-white rounded-sm bg-brand-600"
             onClick={() => navigate(-1)}
           >
             Go back
           </button>
           <button
-            className="px-4 py-2 border rounded"
+            className="px-4 py-2 border rounded-sm"
             onClick={() => navigate("/dashboard")}
           >
             Go dashboard

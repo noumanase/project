@@ -2,7 +2,7 @@ import { type Todo } from "../types/types";
 
 export function Todo(todo: Todo) {
   return (
-    <li key={todo.id} className="p-4 bg-white rounded shadow">
+    <li key={todo.id} className="p-4 bg-white rounded-sm shadow-sm">
       <div className="flex items-center justify-between">
         <span
           className={

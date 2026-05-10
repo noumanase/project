@@ -65,7 +65,7 @@ export const DataTable = () => {
     <div className="flex flex-col gap-4">
       {/* Subtle loading indicator for background refetches */}
       {isFetching && !isPlaceholderData && (
-        <div className="h-0.5 w-full animate-pulse rounded bg-brand-500" />
+        <div className="h-0.5 w-full animate-pulse rounded-sm bg-brand-500" />
       )}
 
       <div
@@ -147,7 +147,7 @@ export const DataTable = () => {
               setPage(page - 1);
             }}
             disabled={page <= 1}
-            className="px-3 py-1 border rounded disabled:opacity-40 hover:bg-gray-50"
+            className="px-3 py-1 border rounded-sm disabled:opacity-40 hover:bg-gray-50"
           >
             Previous
           </button>
@@ -159,7 +159,7 @@ export const DataTable = () => {
               setPage(page + 1);
             }}
             disabled={page >= meta.totalPages}
-            className="px-3 py-1 border rounded disabled:opacity-40 hover:bg-gray-50"
+            className="px-3 py-1 border rounded-sm disabled:opacity-40 hover:bg-gray-50"
           >
             Next
           </button>
