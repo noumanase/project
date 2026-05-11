@@ -59,18 +59,6 @@ export const LoginForm = () => {
         </p>
       )}
 
-      <button
-        type="submit"
-        disabled={isPending}
-        className={cn(
-          "rounded-md bg-brand-500 px-4 py-2 text-sm font-semibold text-white",
-          "hover:bg-brand-600 focus:ring-2 focus:ring-brand-500 focus:ring-offset-2",
-          "disabled:opacity-60 disabled:cursor-not-allowed",
-          "transition-colors",
-        )}
-      >
-        {isPending ? "Signing in…" : "Sign in"}
-      </button>
       <Button variant={"default"} type="submit" disabled={isPending}>
         {isPending ? "Signing in…" : "Sign in"}
       </Button>
