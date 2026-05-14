@@ -7,14 +7,16 @@
 
 import { cn } from "@shared/lib";
 import { useLogin } from "../hooks/useLogin";
-import { Button } from "@shared/components/ui/button";
+import { AppButton } from "@shared/components/ui/appButton";
+import { AppInput } from "@shared/components/ui/appInput";
+import { AppSearchableSelect } from "@shared/components/ui/appSearchableSelect";
 
 export const LoginForm = () => {
   const { state, action, isPending } = useLogin();
 
   return (
     <form action={action} className="flex flex-col w-full max-w-sm gap-4">
-      <div className="flex flex-col gap-1">
+      {/* <div className="flex flex-col gap-1">
         <label htmlFor="email" className="text-sm font-medium text-gray-700">
           Email
         </label>
@@ -50,7 +52,10 @@ export const LoginForm = () => {
             "disabled:opacity-50",
           )}
         />
-      </div>
+      </div> */}
+
+      <AppInput name="email" type="email" label="Email" required />
+      <AppInput name="password" type="password" label="Password" />
 
       {/* Error message from useActionState — no separate error useState needed */}
       {state.error && (
@@ -59,9 +64,11 @@ export const LoginForm = () => {
         </p>
       )}
 
-      <Button variant={"default"} type="submit" disabled={isPending}>
+      <AppButton variant={"default"} type="submit" disabled={isPending}>
         {isPending ? "Signing in…" : "Sign in"}
-      </Button>
+      </AppButton>
+
+      <AppSearchableSelect />
     </form>
   );
 };
